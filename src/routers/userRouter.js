@@ -38,4 +38,14 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ############## user profile ############
+router.post("/me", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    res.send(user);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 module.exports = router;
