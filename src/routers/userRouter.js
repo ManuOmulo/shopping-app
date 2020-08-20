@@ -1,6 +1,4 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 
 const User = require("../models/userModel");
 
@@ -23,17 +21,12 @@ router.post("/signup", async (req, res) => {
 // ########## logging in ############
 router.post("/login", async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findByCredentials(
+      req.body.email,
+      req.body.password
+    );
 
-    if (!user) {
-      return res.status(404).send();
-    }
-
-    if (!bcrypt.compare(user.password, req.body.password)) {
-      return res.status(400).send("Email or password is incorrect");
-    } else {
-      res.status(200).send(user);
-    }
+    res.send(user);
   } catch (e) {
     res.status(400).send();
   }
@@ -50,11 +43,11 @@ router.post("/me", async (req, res) => {
 });
 
 // ****************/ updating user profile /*************/
-router.patch("/me", async (req, res) => {
+router.patch("/users/:id", async (req, res) => {
   try {
     const updates = Object.keys(req.body);
     const allowedUpdates = ["email", "password", "username"];
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findById(req.params.id);
 
     if (!user) {
       return res.status(404).send();
@@ -65,7 +58,7 @@ router.patch("/me", async (req, res) => {
     );
 
     if (!isAllowed) {
-      throw new Error({ error: "Not a valid update" });
+      res.status(400).send({ error: "Not a valid update" });
     }
 
     updates.forEach((update) => (user[update] = req.body[update]));
