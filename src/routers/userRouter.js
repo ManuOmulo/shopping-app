@@ -3,8 +3,6 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const User = require("../models/userModel");
-const { restart } = require("nodemon");
-const { updateMany } = require("../models/userModel");
 
 const router = new express.Router();
 
