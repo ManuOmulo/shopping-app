@@ -3,10 +3,12 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const User = require("../models/userModel");
+const { restart } = require("nodemon");
+const { updateMany } = require("../models/userModel");
 
 const router = new express.Router();
 
-// ***************/ post endpoints ***********?
+// ***************/ post endpoints /***********/
 
 // ########## signing up #############
 router.post("/signup", async (req, res) => {
@@ -46,6 +48,34 @@ router.post("/me", async (req, res) => {
     res.send(user);
   } catch (e) {
     res.status(400).send(e);
+  }
+});
+
+// ****************/ updating user profile /*************/
+router.patch("/me", async (req, res) => {
+  try {
+    const updates = Object.keys(req.body);
+    const allowedUpdates = ["email", "password", "username"];
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      return res.status(404).send();
+    }
+
+    const isAllowed = updates.every((update) =>
+      allowedUpdates.includes(update)
+    );
+
+    if (!isAllowed) {
+      throw new Error({ error: "Not a valid update" });
+    }
+
+    updates.forEach((update) => (user[update] = req.body[update]));
+
+    await user.save();
+    res.send(user);
+  } catch (e) {
+    res.status(500).send(e);
   }
 });
 
