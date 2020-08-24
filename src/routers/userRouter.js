@@ -1,6 +1,7 @@
 const express = require("express");
 
 const User = require("../models/userModel");
+const auth = require("../middleware/auth");
 
 const router = new express.Router();
 
@@ -12,7 +13,8 @@ router.post("/signup", async (req, res) => {
 
   try {
     await user.save();
-    res.send(user);
+    const token = await user.generateAuthToken();
+    res.status(201).send({ user: user, token: token });
   } catch (e) {
     res.status(400).send(e);
   }
@@ -26,33 +28,26 @@ router.post("/login", async (req, res) => {
       req.body.password
     );
 
-    res.send(user);
+    const token = await user.generateAuthToken();
+
+    res.send({ user: user, token: token });
   } catch (e) {
     res.status(400).send();
   }
 });
 
+// ***************/ get endpoints /**************/
+
 // ############## user profile ############
-router.post("/me", async (req, res) => {
-  try {
-    const user = await User.findOne({ email: req.body.email });
-    res.send(user);
-  } catch (e) {
-    res.status(400).send(e);
-  }
+router.get("/me", auth, async (req, res) => {
+  res.send(req.user);
 });
 
 // ****************/ updating user profile /*************/
-router.patch("/users/:id", async (req, res) => {
+router.patch("/users/me", auth, async (req, res) => {
   try {
     const updates = Object.keys(req.body);
     const allowedUpdates = ["email", "password", "username"];
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).send();
-    }
-
     const isAllowed = updates.every((update) =>
       allowedUpdates.includes(update)
     );
@@ -61,8 +56,8 @@ router.patch("/users/:id", async (req, res) => {
       res.status(400).send({ error: "Not a valid update" });
     }
 
+    const user = req.user;
     updates.forEach((update) => (user[update] = req.body[update]));
-
     await user.save();
     res.send(user);
   } catch (e) {
