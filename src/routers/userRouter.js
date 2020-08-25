@@ -28,18 +28,22 @@ router.post("/login", async (req, res) => {
       req.body.password
     );
 
+    if (!user) {
+      res.status(404).send({ error: "User not found" });
+    }
+
     const token = await user.generateAuthToken();
 
     res.send({ user: user, token: token });
   } catch (e) {
-    res.status(400).send();
+    res.status(400).send({ error: "Email or Password is Incorrect" });
   }
 });
 
-// ***************/ get endpoints /**************/
+// *******************/ get endpoints /*******************/
 
 // ############## user profile ############
-router.get("/me", auth, async (req, res) => {
+router.get("/users/me", auth, async (req, res) => {
   res.send(req.user);
 });
 
@@ -62,6 +66,18 @@ router.patch("/users/me", auth, async (req, res) => {
     res.send(user);
   } catch (e) {
     res.status(500).send(e);
+  }
+});
+
+// ******************/ deleting user profile /************/
+
+router.delete("/users/me", auth, async (req, res) => {
+  try {
+    const user = req.user;
+    await user.remove();
+    res.send(user);
+  } catch {
+    res.status(500).send();
   }
 });
 
