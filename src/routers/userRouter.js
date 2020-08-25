@@ -40,6 +40,29 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ########## logging out ##########
+router.post("/users/logout", auth, async (req, res) => {
+  try {
+    const user = req.user;
+    user.tokens = user.tokens.filter((token) => token.token !== req.token);
+    await user.save();
+    res.send();
+  } catch {
+    res.status(500).send();
+  }
+});
+
+// ######### logout all accounts ######
+router.post("/users/logoutAll", auth, async (req, res) => {
+  try {
+    req.user.tokens = [];
+    await req.user.save();
+    res.send();
+  } catch {
+    res.status(500).send();
+  }
+});
+
 // *******************/ get endpoints /*******************/
 
 // ############## user profile ############
