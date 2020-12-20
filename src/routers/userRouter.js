@@ -28,15 +28,11 @@ router.post("/login", async (req, res) => {
       req.body.password
     );
 
-    if (!user) {
-      res.status(404).send({ error: "User not found" });
-    }
-
     const token = await user.generateAuthToken();
 
     res.send({ user: user, token: token });
   } catch (e) {
-    res.status(400).send({ error: "Email or Password is Incorrect" });
+    res.status(400).send();
   }
 });
 
@@ -94,7 +90,7 @@ router.patch("/users/me", auth, async (req, res) => {
 
 // ******************/ deleting user profile /************/
 
-router.delete("/users/me", auth, async (req, res) => {
+router.delete("/users/logout", auth, async (req, res) => {
   try {
     const user = req.user;
     await user.remove();
@@ -103,5 +99,15 @@ router.delete("/users/me", auth, async (req, res) => {
     res.status(500).send();
   }
 });
+
+// ####### deleting all sessions ########
+router.delete("/users/logoutall", auth, async (req, res) => {
+  try {
+    req.user.tokens = []
+    await req.user.save()
+  } catch {
+    res.status(400).send()
+  }
+})
 
 module.exports = router;

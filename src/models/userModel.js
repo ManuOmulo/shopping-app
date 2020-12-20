@@ -40,6 +40,8 @@ const userSchema = new mongoose.Schema({
       },
     },
   ],
+}, {
+  timestamps: true
 });
 
 userSchema.pre("save", async function (next) {
@@ -51,6 +53,13 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+// userSchema.pre("remove", async function (next) {
+//   const user = this
+//   await User.deleteMany()
+//   next()
+// })
+
+// *************** Model Methods *******************
 userSchema.statics.findByCredentials = async (email, password) => {
   const user = await User.findOne({ email: email });
 
@@ -67,6 +76,21 @@ userSchema.statics.findByCredentials = async (email, password) => {
   return user;
 };
 
+userSchema.statics.findByCredentials = async (email, password) => {
+  const user = await User.findOne({email: email})
+  if (!user) {
+    throw new Error("Unable to Login")
+  }
+  const isMatch = await bcrypt.compare(password, user.password)
+  if (!isMatch) {
+    throw new Error("Unable to Login")
+  }
+
+  return user
+
+}
+
+// ************** Instance Methods *******************
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
 
@@ -83,6 +107,7 @@ userSchema.methods.toJSON = function () {
 
   delete userObject.password;
   delete userObject.tokens;
+  delete userObject.__v
 
   return userObject;
 };
